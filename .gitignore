@@ -1,0 +1,20 @@
+## Build output
+bin/
+obj/
+
+## IDE files
+.vs/
+.vscode/
+*.user
+*.suo
+
+## Local configuration and secrets
+appsettings.Local.json
+appsettings.*.local.json
+
+## Local API evidence
+docs/evidence/
+
+## Test and tooling output
+TestResults/
+*.log
