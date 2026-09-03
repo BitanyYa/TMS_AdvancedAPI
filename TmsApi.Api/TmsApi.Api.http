@@ -1,6 +1,39 @@
-@TmsApi.Api_HostAddress = http://localhost:5036
+@host = http://localhost:5050
 
-GET {{TmsApi.Api_HostAddress}}/weatherforecast/
+### V1 courses
+GET {{host}}/api/v1/courses
 Accept: application/json
 
 ###
+
+### V2 courses
+GET {{host}}/api/v2/courses
+Accept: application/json
+X-Api-Key: {{$processEnv TMS_PAID_API_KEY}}
+
+###
+
+### Create enrollment
+POST {{host}}/api/v2/enrollments
+Content-Type: application/json
+
+{
+	"studentId": 1,
+	"courseCode": "CS-101"
+}
+
+###
+
+### Enrollment schedule
+GET {{host}}/api/v2/enrollments/1/schedule
+Accept: application/json
+
+###
+
+### Request transcript
+POST {{host}}/api/v2/transcripts
+Content-Type: application/json
+
+{
+	"studentId": 1
+}

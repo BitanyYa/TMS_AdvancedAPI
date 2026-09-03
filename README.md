@@ -7,13 +7,22 @@
 
 ## Configure the database
 
-Set the PostgreSQL password before running the API. The committed `appsettings.json` contains a placeholder and does not contain credentials.
+Set the PostgreSQL password and API keys before running the API. Secrets are not stored in the repository.
 
 For local development, use user secrets:
 
 ```powershell
 dotnet user-secrets init --project .\TmsApi.Api\TmsApi.Api.csproj
 dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Port=5432;Database=tms_db;Username=postgres;Password=YOUR_POSTGRES_PASSWORD" --project .\TmsApi.Api\TmsApi.Api.csproj
+dotnet user-secrets set "TmsApi:FreeApiKey" "YOUR_FREE_API_KEY" --project .\TmsApi.Api\TmsApi.Api.csproj
+dotnet user-secrets set "TmsApi:PaidApiKey" "YOUR_PAID_API_KEY" --project .\TmsApi.Api\TmsApi.Api.csproj
+```
+
+Set the same API-key values in the environment for the `.http` requests:
+
+```powershell
+$env:TMS_FREE_API_KEY = "YOUR_FREE_API_KEY"
+$env:TMS_PAID_API_KEY = "YOUR_PAID_API_KEY"
 ```
 
 Apply the existing migration:
