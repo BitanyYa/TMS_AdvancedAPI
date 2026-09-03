@@ -9,7 +9,7 @@ Accept: application/json
 ### V2 courses
 GET {{host}}/api/v2/courses
 Accept: application/json
-X-Api-Key: tms-paid-001
+X-Api-Key: {{$processEnv TMS_PAID_API_KEY}}
 
 ###
 
