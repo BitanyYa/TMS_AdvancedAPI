@@ -1,3 +1,4 @@
+using System.Threading.Channels;
 using System.Threading.RateLimiting;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
@@ -6,11 +7,16 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
 using Scalar.AspNetCore;
 using TmsApi.Api.ExceptionHandlers;
+using TmsApi.Api.Hubs;
 using TmsApi.Api.Middleware;
+using TmsApi.Api.Notifications;
 using TmsApi.Api.RateLimiting;
 using TmsApi.Application.Interfaces;
+using TmsApi.Application.Notifications;
+using TmsApi.Application.Transcripts;
 using TmsApi.Infrastructure.Persistence;
 using TmsApi.Infrastructure.Services;
+using TmsApi.Infrastructure.Transcripts;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,6 +37,15 @@ builder.Services.AddHybridCache(options =>
 #pragma warning restore EXTEXP0018
 
 builder.Services.AddScoped<ICachedCourseService, CachedCourseService>();
+
+// SignalR & Background Worker Services
+builder.Services.AddSignalR();
+builder.Services.AddSingleton<ITranscriptStatusStore, InMemoryTranscriptStatusStore>();
+builder.Services.AddSingleton(Channel.CreateBounded<TranscriptRequest>(new BoundedChannelOptions(100)
+{
+    FullMode = BoundedChannelFullMode.Wait
+}));
+builder.Services.AddSingleton<ITranscriptNotificationService, SignalRTranscriptNotificationService>();
 
 // Rate Limiting registration
 builder.Services.AddRateLimiter(options =>
@@ -105,6 +120,16 @@ builder.Services.AddRateLimiter(options =>
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 
+// OpenAPI Document Splitting
+builder.Services.AddOpenApi("v1", options =>
+{
+    options.ShouldInclude = description => description.GroupName == "v1";
+});
+builder.Services.AddOpenApi("v2", options =>
+{
+    options.ShouldInclude = description => description.GroupName == "v2";
+});
+
 // Versioning
 builder.Services.AddApiVersioning(options =>
 {
@@ -125,11 +150,21 @@ var app = builder.Build();
 app.UseExceptionHandler();
 app.UseRouting();
 
-// Rate limiter MUST be placed after UseRouting and before MapControllers
+// Rate limiter placed after UseRouting and before MapControllers
 app.UseRateLimiter();
 
 app.UseMiddleware<V1DeprecationMiddleware>();
 
+app.MapScalarApiReference(options =>
+{
+    options.WithTitle("TMS API Reference")
+           .AddDocument("v1", "API Version 1.0")
+           .AddDocument("v2", "API Version 2.0");
+});
+
 app.MapControllers();
+
+// Map SignalR Hub
+app.MapHub<TmsHub>("/hubs/tms");
 
 app.Run();
